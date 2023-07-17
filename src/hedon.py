@@ -2,7 +2,7 @@ import configparser
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
 
-from messageFormater import parseReactions
+from messageFormater import formatMessage
 config = configparser.ConfigParser()
 config.read("config.ini")
 api_id: str = config['Telegram']['api_id']
@@ -14,24 +14,26 @@ with TelegramClient(username, api_id, api_hash) as client:
         offset_date=0,
         offset_id=0,
         offset_peer="username",
-        limit=5,
+        limit=100,
         hash=0,
     ))
 
-
 with TelegramClient(username, api_id, api_hash) as client:
     for chat in result.chats:
-        print(chat.title)
         max_messages = 100
         d = {}
-        for message in client.iter_messages(chat.id):
-            d["message{0}".format(message.id)] = []
-            d["message{0}".format(message.id)].append(message.text)
-            d["message{0}".format(message.id)].append(parseReactions(str(message.reactions)))
-            d["message{0}".format(message.id)].append(message.date)
-            d["message{0}".format(message.id)].append(message.views)
+        print (f"{chat.title} in progress...")
+        for message in client.iter_messages(chat.id): 
+            if len(message.text) < 5:
+                continue
+            d["message{0}".format(message.id)] = formatMessage(message)
             max_messages -= 1
             if max_messages == 0:
-                print (d)
                 break
-        
+
+with open('data.csv', 'w') as f:
+    f.write("Author, Title, Interactions, Views, Date, Message body\n")
+    for line in d:
+        for data in d[line]:
+            f.write(f'"{data}",')
+        f.write("\n")
