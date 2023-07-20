@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 def parseReactions(text):
     pattern = r'count=\D*(\d+)'  # Regular expression pattern to match numbers after "count=15"
     numbers = re.findall(pattern, text)
@@ -44,4 +45,22 @@ def checkChat(chat, listOfChannels):
         return True
     elif chat.title not in listOfChannels:
         print (f"{chat.title} is not in the channel list. Skipping...")
+        return True
+
+def get_datetime_from_user(string):
+    while True:
+        try:
+            date_string = input(string)
+            datetime_obj = datetime.strptime(date_string, "%Y-%m-%d")
+            return datetime_obj
+        except ValueError:
+            print("Invalid input. Please enter the date and time in the correct format.")
+
+def nOfDays(startDate, endDate):
+    delta = endDate - startDate
+    if delta.days >= 0:
+        return True
+def checkToday(date):
+    dayDiff = date - datetime.today()
+    if dayDiff.days > 0:
         return True
