@@ -2,14 +2,13 @@ import os
 import configparser
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
-from messageFormater import formatMessage
+from funtionsHedon import *
 import csv
+from datetime import datetime
 
 if not os.path.isfile("config.ini"):
-    print("Error: config.ini file not found.")
+    print("Error: config.ini file not found. config.ini file must be in the same directory as hedon.py, and must contain API id and API hash")
     exit()
-
-
 config = configparser.ConfigParser()
 try:
     config.read("config.ini")
@@ -19,6 +18,7 @@ try:
 except configparser.Error as e:
     print(f"Error reading configuration: {str(e)}")
     exit()
+
 
 with TelegramClient(username, api_id, api_hash) as client:
     result = client(GetDialogsRequest(
@@ -30,21 +30,13 @@ with TelegramClient(username, api_id, api_hash) as client:
     ))
     
 try:
-    with open ("channels.txt", "r") as f:
-        listOfChannels = f.readlines()
-        listOfChannels = [x.strip() for x in listOfChannels]
+    listOfChannels = createListOfChannels()
 except FileNotFoundError:
-    print ("No channel list exists. Do you want to generate one? (y/n)")
-    if input() == "n":
-        exit()
-    with open("channels.txt", "w") as f:
-        for chat in result.chats:
-            f.write(chat.title + "\n")
+    generateChannelsFile(result)
 except IOError as e:
     print(f"An error occurred: {str(e)}")
 
 d = {}
-
 for chat in result.chats:
     if str(chat.title) in listOfChannels:
         print (chat.title)
@@ -54,27 +46,27 @@ print ("------------------------------------------------------------------------
 print ("These are the channels picked up by the script. Do you want to continue? (y/n)")
 if input() == "n":
     exit()
-    
+
+star_date = datetime(2023, 7, 18)
+end_date = datetime(2023, 7, 10)
+
 with TelegramClient(username, api_id, api_hash) as client:
     for chat in result.chats:
-        if chat.megagroup:
-            print (f"{chat.title} is not a channel. Skipping...")
+        if checkChat(chat, listOfChannels):
             continue
-        elif chat.title not in listOfChannels:
-            print (f"{chat.title} is not in the list of channels. Skipping...")
-            continue
-        max_messages = 100
         print (f"{chat.title} in progress...")
-        for message in client.iter_messages(chat.id): 
-            if len(message.text) < 5:
+        for message in client.iter_messages(chat.id):
+            if message.date.replace(tzinfo=None) > star_date:
+                continue
+            elif message.date.replace(tzinfo=None) < end_date:
+                break
+            if len(str(message.text)) < 5:
                 continue
             d["message{0}".format(message.id)] = formatMessage(message)
-            max_messages -= 1
-            if max_messages == 0:
-                break
+            
 
 with open("data.csv", "w", newline="") as f:
     writer = csv.writer(f)
-    writer.writerow(["Author", "Title", "Interactions", "Views", "Date", "Message body"])
+    writer.writerow(["Author", "Title", "Interactions", "Views", "Date", "Message body", "Link"])
     for line in d.values():
         writer.writerow(line)

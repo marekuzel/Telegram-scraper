@@ -17,7 +17,31 @@ def formatMessage(message):
     list.append(msg_title)
     list.append(parseReactions(str(message.reactions)))
     list.append(message.views)
-    list.append(str(message.date))
+    list.append(str(message.date.replace(tzinfo=None)))
     list.append(message.text)
     list.append(get_message_link(message.chat.id, message.id))
     return list
+
+def generateChannelsFile(result):
+    print ("No channel list exists. Do you want to generate one? (y/n)")
+    if input() == "n":
+        exit()
+    with open("channels.txt", "w") as f:
+        for chat in result.chats:
+            f.write(chat.title + "\n")
+    print ("Channel list generated. Please edit channels.txt and run the script again.")
+    exit()
+
+def createListOfChannels():
+    with open ("channels.txt", "r") as f:
+        listOfChannels = f.readlines()
+    listOfChannels = [x.strip() for x in listOfChannels]
+    return listOfChannels
+
+def checkChat(chat, listOfChannels):
+    if chat.megagroup:
+        print (f"{chat.title} is not a channel. Skipping...")
+        return True
+    elif chat.title not in listOfChannels:
+        print (f"{chat.title} is not in the channel list. Skipping...")
+        return True
