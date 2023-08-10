@@ -1,16 +1,42 @@
 import re
 from datetime import datetime
-def parseReactions(text):
+
+def parseReactions(text: str) -> int:
+    """Parses the number of reactions from a string.
+
+    Args:
+        text (str): message.reactions
+
+    Returns:
+        int: total number of reactions
+    """
     pattern = r'count=\D*(\d+)'  # Regular expression pattern to match numbers after "count=15"
     numbers = re.findall(pattern, text)
     total_sum = sum(map(int, numbers))
     return total_sum
 
-def get_message_link(chat_id, message_id):
+def get_message_link(chat_id: int, message_id: int) -> str:
+    """Returns the link to a message.
+
+    Args:
+        chat_id (int): chat_id
+        message_id (int): message_id
+
+    Returns:
+        str: link to the message
+    """
     base_url = "https://t.me/c/"
     return f"{base_url}{chat_id}/{message_id}"
 
-def formatMessage(message):
+def formatMessage(message: str)->list:
+    """Formats the messages into a list.
+
+    Args:
+        message (str): message.text
+
+    Returns:
+        list: list of message attributes
+    """
     list = []
     title = str(message.text).split(" ")
     msg_title = " ".join(title[:4])
@@ -21,9 +47,15 @@ def formatMessage(message):
     list.append(str(message.date.replace(tzinfo=None)))
     list.append(message.text)
     list.append(get_message_link(message.chat.id, message.id))
+    list.append(message.mentioned)
     return list
 
-def generateChannelsFile(result):
+def generateChannelsFile(result:telethon.tl.types.messages.DialogsSlice) -> None:
+    """Generates a list of channels from the result of GetDialogsRequest.
+
+    Args:
+        result (telethon.tl.types.messages.DialogsSlice): result of GetDialogsRequest
+    """
     print ("No channel list exists. Do you want to generate one? (y/n)")
     if input() == "n":
         exit()
@@ -33,7 +65,12 @@ def generateChannelsFile(result):
     print ("Channel list generated. Please edit channels.txt and run the script again.")
     exit()
 
-def createListOfChannels():
+def createListOfChannels()->list:
+    """Creates a list of channels from channels.txt.
+
+    Returns:
+        list: list of channels
+    """
     with open ("channels.txt", "r") as f:
         listOfChannels = f.readlines()
     listOfChannels = [x.strip() for x in listOfChannels]
@@ -52,15 +89,33 @@ def get_datetime_from_user(string):
         try:
             date_string = input(string)
             datetime_obj = datetime.strptime(date_string, "%Y-%m-%d")
-            return datetime_obj
+            if checkToday(datetime_obj):
+                print ("Starting date is incorrect. Maybe date entered is in the future?")
+            else:
+                return datetime_obj
         except ValueError:
             print("Invalid input. Please enter the date and time in the correct format.")
 
 def nOfDays(startDate, endDate):
     delta = endDate - startDate
-    if delta.days >= 0:
+    if delta.days <= 0:
         return True
+    
 def checkToday(date):
     dayDiff = date - datetime.today()
     if dayDiff.days > 0:
         return True
+    
+def getDates ():
+    start_date = get_datetime_from_user ("Enter the starting date. The format should be YYYY-MM-DD: ")
+    end_date = get_datetime_from_user ("Enter the date of the end of downloaded period. The format should be YYYY-MM-DD: ")
+    return start_date, end_date
+    
+def printHelp():
+    print ("Usage: python3 hedon.py [OPTIONS]")
+    print ("Options:")
+    print ("  -h, --help        show this help message and exit")
+    print ("  -c, --channels    generate a list of channels")
+    print ("  -m, --map         generates a csv of connections")
+    print ("  run without options to download messages")
+    exit()
