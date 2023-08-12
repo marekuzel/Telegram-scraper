@@ -6,7 +6,7 @@ from functionsHedon import *
 import csv
 from datetime import datetime
 import sys
-
+#checks for arguments
 if len(sys.argv) == 2:
     if sys.argv[1] == "-h" or sys.argv[1] == "--help":
         printHelp()
@@ -14,7 +14,8 @@ if len(sys.argv) == 2:
         #TODO: generateChannelsFile()
         print ("developer was lazy and this feature is to be impemented in the future....")
         exit()
-    
+
+#checks for config file
 if not os.path.isfile("config.ini"):
     print("Error: config.ini file not found. config.ini file must be in the same directory as hedon.py, and must contain API id and API hash")
     exit()
@@ -28,7 +29,7 @@ except configparser.Error as e:
     print(f"Error reading configuration: {str(e)}")
     exit()
 
-
+#gets the api_id and api_hash
 with TelegramClient(username, api_id, api_hash) as client:
     result = client(GetDialogsRequest(
         offset_date=0,
@@ -37,7 +38,8 @@ with TelegramClient(username, api_id, api_hash) as client:
         limit=100,
         hash=0,
     ))
-    
+
+#checks if the channels file exists, if not, generates it
 try:
     listOfChannels = createListOfChannels()
 except FileNotFoundError:
@@ -56,12 +58,13 @@ print ("These are the channels picked up by the script. Do you want to continue?
 if input() == "n":
     exit()
 
-
+# gets the start and end dates from the user
 start_date, end_date = getDates()
 if nOfDays(start_date, end_date):
     print ("The start date should be before the end date")
     exit()
-    
+
+#goes through the chats and messages and adds them to a dictionary
 with TelegramClient(username, api_id, api_hash) as client:
     for chat in result.chats:
         if checkChat(chat, listOfChannels):
@@ -77,7 +80,7 @@ with TelegramClient(username, api_id, api_hash) as client:
                 continue
             d["message{0}".format(message.id)] = formatMessage(message)
             
-
+#writing to csv file
 with open("data.csv", "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["Author", "Title", "Interactions", "Views", "Date", "Message body", "Link"])

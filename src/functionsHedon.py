@@ -76,7 +76,16 @@ def createListOfChannels()->list:
     listOfChannels = [x.strip() for x in listOfChannels]
     return listOfChannels
 
-def checkChat(chat, listOfChannels):
+def checkChat(chat, listOfChannels:listOfChannels) -> bool:
+    """Checks if the chat is a channel and if it is in the channel list.
+
+    Args:
+        chat (_type_): chat object
+        listOfChannels (listOfChannels): list of channels
+
+    Returns:
+        bool: True if chat is not a channel or if it is not in the channel list
+    """
     if chat.megagroup:
         print (f"{chat.title} is not a channel. Skipping...")
         return True
@@ -84,7 +93,15 @@ def checkChat(chat, listOfChannels):
         print (f"{chat.title} is not in the channel list. Skipping...")
         return True
 
-def get_datetime_from_user(string):
+def get_datetime_from_user(string: str) -> datetime:
+    """Gets the date and time from the user.
+
+    Args:
+        string (str): Input from user
+
+    Returns:
+        datetime: datetime object
+    """
     while True:
         try:
             date_string = input(string)
@@ -96,22 +113,46 @@ def get_datetime_from_user(string):
         except ValueError:
             print("Invalid input. Please enter the date and time in the correct format.")
 
-def nOfDays(startDate, endDate):
+def nOfDays(startDate: datetime, endDate: datetime) -> bool:
+    """Checks if the number of days between the start and end date is less than or equal to 0.
+
+    Args:
+        startDate (datetime): Starting day of the period
+        endDate (datetime): Ending day of the period
+
+    Returns:
+        bool: True if the number of days is less than or equal to 0
+    """
     delta = endDate - startDate
     if delta.days <= 0:
         return True
     
-def checkToday(date):
+def checkToday(date: datetime) -> bool:
+    """Checks if the date is in the future.
+
+    Args:
+        date (datetime): date
+
+    Returns:
+        bool: True if the date is in the future
+    """
     dayDiff = date - datetime.today()
     if dayDiff.days > 0:
         return True
     
-def getDates ():
+def getDates () -> tuple:
+    """Gets the start and end date from the user.
+
+    Returns:
+        tuple: start and end date
+    """
     start_date = get_datetime_from_user ("Enter the starting date. The format should be YYYY-MM-DD: ")
     end_date = get_datetime_from_user ("Enter the date of the end of downloaded period. The format should be YYYY-MM-DD: ")
     return start_date, end_date
     
 def printHelp():
+    """Prints help information
+    """
     print ("Usage: python3 hedon.py [OPTIONS]")
     print ("Options:")
     print ("  -h, --help        show this help message and exit")
