@@ -6,14 +6,6 @@ from functionsHedon import *
 import csv
 from datetime import datetime
 import sys
-#checks for arguments
-if len(sys.argv) == 2:
-    if sys.argv[1] == "-h" or sys.argv[1] == "--help":
-        printHelp()
-    elif sys.argv[1] == "-c" or sys.argv[1] == "--channels":
-        #TODO: generateChannelsFile()
-        print ("developer was lazy and this feature is to be impemented in the future....")
-        exit()
 
 #checks for config file
 if not os.path.isfile("config.ini"):
@@ -38,14 +30,21 @@ with TelegramClient(username, api_id, api_hash) as client:
         limit=100,
         hash=0,
     ))
-
-#checks if the channels file exists, if not, generates it
-try:
-    listOfChannels = createListOfChannels()
-except FileNotFoundError:
-    generateChannelsFile(result)
-except IOError as e:
-    print(f"An error occurred: {str(e)}")
+names = False
+#checks for arguments
+if len(sys.argv) == 2:
+    if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+        printHelp()
+    elif sys.argv[1] == "-c" or sys.argv[1] == "--channels":
+        generateChannelsFile(result)
+        exit()
+    elif sys.argv[1] == "-m" or sys.argv[1] == "--map":
+        runMap(result.chats, TelegramClient(username, api_id, api_hash))
+    elif sys.argv[1] == "-n" or sys.argv[1] == "--names":
+        names = True
+        
+#checks if the channels file exists and create list of channels
+listOfChannels = tryListOfChannels(result)
 
 d = {}
 for chat in result.chats:
@@ -63,7 +62,7 @@ start_date, end_date = getDates()
 if nOfDays(start_date, end_date):
     print ("The start date should be before the end date")
     exit()
-
+subjects = {}
 #goes through the chats and messages and adds them to a dictionary
 with TelegramClient(username, api_id, api_hash) as client:
     for chat in result.chats:
@@ -72,17 +71,30 @@ with TelegramClient(username, api_id, api_hash) as client:
         print (f"{chat.title} in progress...")
         for message in client.iter_messages(chat.id):
             if message.date.replace(tzinfo=None) > end_date:
-                print (message)
                 continue
             elif message.date.replace(tzinfo=None) < start_date:
                 break
             if len(str(message.text)) < 5:
                 continue
-            d["message{0}".format(message.id)] = formatMessage(message)
-            
+            if names:
+                subjectsPerMessage = countSubjects(message.text)
+                for name in subjectsPerMessage:
+                    if name not in subjects:
+                        subjects[name] = subjectsPerMessage[name]
+                    else:
+                        subjects[name] += subjectsPerMessage[name]
+            else:
+                subjectsPerMessage ={}
+            d["message{0}".format(message.id)] = formatMessage(message, names, subjectsPerMessage, client)
+            subjectsPerMessage = {key: 0 for key in subjectsPerMessage}
 #writing to csv file
+if names:
+    print (subjects)
 with open("data.csv", "w", newline="") as f:
     writer = csv.writer(f)
-    writer.writerow(["Author", "Title", "Interactions", "Views", "Date", "Message body", "Link"])
+    listOfHeadings = ["Author", "Title", "Interactions", "Views", "Date", "Message body", "Link", "Forward from"]
+    for subject in subjects:
+        listOfHeadings.append(subject)
+    writer.writerow(listOfHeadings)
     for line in d.values():
         writer.writerow(line)

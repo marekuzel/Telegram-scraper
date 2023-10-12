@@ -13,6 +13,8 @@ enviroment: $(VENV_PYTHON)
 	. ../$(VENV)/bin/activate
 	pip3 install -r requirements.txt
 
+venv: $(VENV_PYTHON)
+	. ../$(VENV)/bin/activate
 .PHONY: clean
 clean: 
 	find . -type d -name '__pycache__' -exec rm -r {} +

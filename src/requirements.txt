@@ -6,3 +6,4 @@ pluggy==1.0.0
 tomli==2.0.1
 telethon==1.28.5
 tqdm==1.0
+fuzzywuzzy

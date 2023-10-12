@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from fuzzywuzzy import fuzz
 
 def parseReactions(text: str) -> int:
     """Parses the number of reactions from a string.
@@ -28,11 +29,13 @@ def get_message_link(chat_id: int, message_id: int) -> str:
     base_url = "https://t.me/c/"
     return f"{base_url}{chat_id}/{message_id}"
 
-def formatMessage(message: str)->list:
+def formatMessage(message: str, names: bool, subjects:dict, client)->list:
     """Formats the messages into a list.
 
     Args:
         message (str): message.text
+        names (bool): True if names are to be counted
+        subjects (dict): Dictionary storing appearances of each subject
 
     Returns:
         list: list of message attributes
@@ -47,14 +50,21 @@ def formatMessage(message: str)->list:
     list.append(str(message.date.replace(tzinfo=None)))
     list.append(message.text)
     list.append(get_message_link(message.chat.id, message.id))
-    list.append(message.mentioned)
+    try:
+        list.append((client.get_entity(message.fwd_from.from_id)).username)
+    except:
+        list.append("None")
+    
+    if names:
+        for subject in subjects:
+            list.append(subjects[subject])
     return list
 
-def generateChannelsFile(result:telethon.tl.types.messages.DialogsSlice) -> None:
+def generateChannelsFile(result) -> None:
     """Generates a list of channels from the result of GetDialogsRequest.
 
     Args:
-        result (telethon.tl.types.messages.DialogsSlice): result of GetDialogsRequest
+        result (): result of GetDialogsRequest
     """
     print ("No channel list exists. Do you want to generate one? (y/n)")
     if input() == "n":
@@ -76,23 +86,26 @@ def createListOfChannels()->list:
     listOfChannels = [x.strip() for x in listOfChannels]
     return listOfChannels
 
-def checkChat(chat, listOfChannels:listOfChannels) -> bool:
+def checkChat(chat, listOfChannels:list) -> bool:
     """Checks if the chat is a channel and if it is in the channel list.
 
     Args:
         chat (_type_): chat object
-        listOfChannels (listOfChannels): list of channels
+        listOfChannels (list): list of channels
 
     Returns:
         bool: True if chat is not a channel or if it is not in the channel list
     """
-    if chat.megagroup:
-        print (f"{chat.title} is not a channel. Skipping...")
+    try:
+        if chat.megagroup:
+            print (f"{chat.title} is not a channel. Skipping...")
+            return True
+        elif chat.title not in listOfChannels:
+            print (f"{chat.title} is not in the channel list. Skipping...")
+            return True
+    except AttributeError:
+        print ("AttributeError")
         return True
-    elif chat.title not in listOfChannels:
-        print (f"{chat.title} is not in the channel list. Skipping...")
-        return True
-
 def get_datetime_from_user(string: str) -> datetime:
     """Gets the date and time from the user.
 
@@ -160,3 +173,55 @@ def printHelp():
     print ("  -m, --map         generates a csv of connections")
     print ("  run without options to download messages")
     exit()
+
+def tryListOfChannels(listOfChannels:list) -> list:
+    try:
+        listOfChannels = createListOfChannels()
+    except FileNotFoundError:
+        print(f"Error: No channel list found. Run the command -c or --channels to generate a channel list.")
+        exit()
+    except IOError as e:
+        print(f"An error occurred: {str(e)}")
+    return listOfChannels
+
+def getListOfSubjects(File:str) -> dict:
+    """creates list of names of the subjects to count from the text file
+
+    Args:
+        File (str): name of the text file
+
+    Returns:
+        list: list of subjects
+    """
+    subjects = []
+    with open(File, "r") as f:
+        listOfSubjects = f.readlines()
+    for line in listOfSubjects:
+        line = line.strip()
+        line = line.lower()
+        subjects.append(line)
+    return subjects
+
+def countSubjects(text:str) -> dict:
+    """counts number of subjects in the given text
+
+    Args:
+        text (str): text body of the message
+    Returns:
+        dict: dictionary of subjects and their count
+    """
+    subjects = getListOfSubjects("subjects.txt")
+    subjectsD = {}
+    for name in subjects:
+        subjectsD[name] = 0
+    SIMILARITY_THRESHOLD=70 #this seemed to work fine for me, however, this feature is very unreliable and should be used only for estimates
+    textList = text.lower().split()
+    for subject in subjects:
+        for word in textList:
+            similarity = fuzz.ratio(subject, word)
+            if similarity >= SIMILARITY_THRESHOLD:
+                subjectsD[subject] += 1
+                with open("spravy.txt", "a") as w:
+                    w.write(text)
+                    w.write("\n-----------------------\n")
+    return subjectsD
