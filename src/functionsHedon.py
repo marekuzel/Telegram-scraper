@@ -169,9 +169,9 @@ def printHelp():
     print ("Usage: python3 hedon.py [OPTIONS]")
     print ("Options:")
     print ("  -h, --help        show this help message and exit")
+    print ("  -n, --names       downloads messages with count of names in subjects.txt file. Subject file should contain each subject/name on a new line")
     print ("  -c, --channels    generate a list of channels")
-    print ("  -m, --map         generates a csv of connections")
-    print ("  run without options to download messages")
+    print ("  run without options to download messages from selected time period")
     exit()
 
 def tryListOfChannels(listOfChannels:list) -> list:
@@ -194,8 +194,12 @@ def getListOfSubjects(File:str) -> dict:
         list: list of subjects
     """
     subjects = []
-    with open(File, "r") as f:
-        listOfSubjects = f.readlines()
+    try:
+        with open(File, "r") as f:
+            listOfSubjects = f.readlines()
+    except:
+        print(f"Error: No subjects.txt found in working directory. Create a text file with one name/subject on each line")
+        exit()
     for line in listOfSubjects:
         line = line.strip()
         line = line.lower()

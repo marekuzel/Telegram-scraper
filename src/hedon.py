@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import os
 import configparser
 from telethon.sync import TelegramClient
@@ -38,8 +40,6 @@ if len(sys.argv) == 2:
     elif sys.argv[1] == "-c" or sys.argv[1] == "--channels":
         generateChannelsFile(result)
         exit()
-    elif sys.argv[1] == "-m" or sys.argv[1] == "--map":
-        runMap(result.chats, TelegramClient(username, api_id, api_hash))
     elif sys.argv[1] == "-n" or sys.argv[1] == "--names":
         names = True
         
