@@ -1,12 +1,12 @@
 # Hedon
 ### Telegram chat scrapper
 
-Hedon is a simple script for scraping Telegram chat data which are publicly availible. It uses Telethon library for accessing Telegram API.
+Hedon is a simple script for scraping Telegram chat data which are publicly availible. It uses Telethon library for accessing Telegram API. Hedon runs from UNIX terminal and is written in Python 3.
 
 For Hedon to work you will need to create a Telegram API key (see [Use](#use) section for more information).
 
 ## State
-Hedon is still in development
+Hedon is still in development. 
 
 ## Use
 Before using Hedon you need to create a Telegram API key. You can find more information about creating Telegram API key [here](https://core.telegram.org/api/obtaining_api_id). After creating the key you need to create a file named `config.ini` in the same directory as `hedon.py` and add the following lines to it:
