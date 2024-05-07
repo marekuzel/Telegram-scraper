@@ -1,27 +1,16 @@
 #!/usr/bin/python3
 
 import os
-import configparser
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
 from functionsHedon import *
 import csv
 from datetime import datetime
 import sys
+import argparse
 
 #checks for config file
-if not os.path.isfile("config.ini"):
-    print("Error: config.ini file not found. config.ini file must be in the same directory as hedon.py, and must contain API id and API hash")
-    exit()
-config = configparser.ConfigParser()
-try:
-    config.read("config.ini")
-    api_id: str = config['Telegram']['api_id']
-    api_hash = config['Telegram']['api_hash']
-    username = config['Telegram']['username']
-except configparser.Error as e:
-    print(f"Error reading configuration: {str(e)}")
-    exit()
+api_id, api_hash, username = getConfig()
 
 #gets the api_id and api_hash
 with TelegramClient(username, api_id, api_hash) as client:
@@ -32,17 +21,20 @@ with TelegramClient(username, api_id, api_hash) as client:
         limit=100,
         hash=0,
     ))
+
+parser = argparse.ArgumentParser(description="Downloads messages from telegram chats and saves them to a csv file")
+parser.add_argument("-n", "--names", help="downloads messages with count of subject mentions. Subject file should contain each subject/name on a new line. Experimental feature", action="store_true")
+parser.add_argument("-c", "--channels", help="Creates a file with the list of channels", action="store_true")
+
 names = False
-#checks for arguments
-if len(sys.argv) == 2:
-    if sys.argv[1] == "-h" or sys.argv[1] == "--help":
-        printHelp()
-    elif sys.argv[1] == "-c" or sys.argv[1] == "--channels":
-        generateChannelsFile(result)
-        exit()
-    elif sys.argv[1] == "-n" or sys.argv[1] == "--names":
-        names = True
-        
+
+args = parser.parse_args()
+if args.names:
+    names = True
+elif args.channels:
+    generateChannelsFile(result)
+    exit()
+
 #checks if the channels file exists and create list of channels
 listOfChannels = tryListOfChannels(result)
 
@@ -74,8 +66,6 @@ with TelegramClient(username, api_id, api_hash) as client:
                 continue
             elif message.date.replace(tzinfo=None) < start_date:
                 break
-            if len(str(message.text)) < 5:
-                continue
             if names:
                 subjectsPerMessage = countSubjects(message.text)
                 for name in subjectsPerMessage:

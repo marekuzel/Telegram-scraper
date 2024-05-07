@@ -1,6 +1,8 @@
 import re
 from datetime import datetime
 from fuzzywuzzy import fuzz
+import configparser
+import os
 
 def parseReactions(text: str) -> int:
     """Parses the number of reactions from a string.
@@ -66,7 +68,7 @@ def generateChannelsFile(result) -> None:
     Args:
         result (): result of GetDialogsRequest
     """
-    print ("No channel list exists. Do you want to generate one? (y/n)")
+    print ("Do you want to generate channel.txt? (y/n)")
     if input() == "n":
         exit()
     with open("channels.txt", "w") as f:
@@ -163,18 +165,11 @@ def getDates () -> tuple:
     end_date = get_datetime_from_user ("Enter the date of the end of downloaded period. The format should be YYYY-MM-DD: ")
     return start_date, end_date
     
-def printHelp():
-    """Prints help information
-    """
-    print ("Usage: python3 hedon.py [OPTIONS]")
-    print ("Options:")
-    print ("  -h, --help        show this help message and exit")
-    print ("  -n, --names       downloads messages with count of names in subjects.txt file. Subject file should contain each subject/name on a new line")
-    print ("  -c, --channels    generate a list of channels")
-    print ("  run without options to download messages from selected time period")
-    exit()
 
 def tryListOfChannels(listOfChannels:list) -> list:
+    """
+    Tries to grab a list of channels. If the file is not found, it raises an error.
+    """
     try:
         listOfChannels = createListOfChannels()
     except FileNotFoundError:
@@ -229,3 +224,36 @@ def countSubjects(text:str) -> dict:
                     w.write(text)
                     w.write("\n-----------------------\n")
     return subjectsD
+
+def createConfig():
+    """
+    Asks the user for api_id, api_hash and username and writes them to a config file.
+    """
+    
+    print("Please enter your api_id, api_hash and username. You can find them at https://my.telegram.org/apps")
+    api = input("Enter your api_id: ")
+    hash = input("Enter your api_hash: ")
+    username = input("Enter your username: ")
+    with open("config.ini", "w") as f:
+        f.write(f"api_id = {api}\n")
+        f.write(f"api_hash = {hash}\n")
+        f.write(f"username = {username}\n")
+        
+def getConfig()->tuple:
+    """
+    Reads the configuration file and returns the api_id, api_hash and username.
+    """
+    if not os.path.isfile("config.ini"):
+        print("Config file not found. Creating config file...")
+        createConfig()
+        exit()
+    config = configparser.ConfigParser()
+    try:
+        config.read("config.ini")
+        api_id: str = config['Telegram']['api_id']
+        api_hash = config['Telegram']['api_hash']
+        username = config['Telegram']['username']
+    except configparser.Error as e:
+        print(f"Error reading configuration: {str(e)}")
+        exit()
+    return api_id, api_hash, username
