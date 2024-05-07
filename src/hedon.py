@@ -4,7 +4,6 @@ import os
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
 from functionsHedon import *
-import csv
 from datetime import datetime
 import sys
 import argparse
@@ -38,15 +37,9 @@ elif args.channels:
 #checks if the channels file exists and create list of channels
 listOfChannels = tryListOfChannels(result)
 
+#check if the channels selected should be downloaded
 d = {}
-for chat in result.chats:
-    if str(chat.title) in listOfChannels:
-        print (chat.title)
-    else:
-        print (f"{chat.title} not selected")
-print ("-------------------------------------------------------------------------------")
-print ("These are the channels picked up by the script. Do you want to continue? (y/n)")
-if input() == "n":
+if channelVerif(result, listOfChannels, d):
     exit()
 
 # gets the start and end dates from the user
@@ -54,6 +47,8 @@ start_date, end_date = getDates()
 if nOfDays(start_date, end_date):
     print ("The start date should be before the end date")
     exit()
+
+
 subjects = {}
 #goes through the chats and messages and adds them to a dictionary
 with TelegramClient(username, api_id, api_hash) as client:
@@ -78,13 +73,4 @@ with TelegramClient(username, api_id, api_hash) as client:
             d["message{0}".format(message.id)] = formatMessage(message, names, subjectsPerMessage, client)
             subjectsPerMessage = {key: 0 for key in subjectsPerMessage}
 #writing to csv file
-if names:
-    print (subjects)
-with open("data.csv", "w", newline="") as f:
-    writer = csv.writer(f)
-    listOfHeadings = ["Author", "Title", "Interactions", "Views", "Date", "Message body", "Link", "Forward from"]
-    for subject in subjects:
-        listOfHeadings.append(subject)
-    writer.writerow(listOfHeadings)
-    for line in d.values():
-        writer.writerow(line)
+csvWriter(names,subjects,d)

@@ -3,6 +3,8 @@ from datetime import datetime
 from fuzzywuzzy import fuzz
 import configparser
 import os
+import csv
+
 
 def parseReactions(text: str) -> int:
     """Parses the number of reactions from a string.
@@ -257,3 +259,27 @@ def getConfig()->tuple:
         print(f"Error reading configuration: {str(e)}")
         exit()
     return api_id, api_hash, username
+
+
+def channelVerif (result, listOfChannels, d) -> bool:
+    for chat in result.chats:
+        if str(chat.title) in listOfChannels:
+            print (chat.title)
+        else:
+            print (f"{chat.title} not selected")
+    print ("-------------------------------------------------------------------------------")
+    print ("These are the channels picked up by the script. Do you want to continue? (y/n)")
+    if input() == "n":
+        return False
+
+def csvWriter(names, subjects, d):
+    if names:
+        print (subjects)
+    with open("data.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        listOfHeadings = ["Author", "Title", "Interactions", "Views", "Date", "Message body", "Link", "Forward from"]
+        for subject in subjects:
+            listOfHeadings.append(subject)
+        writer.writerow(listOfHeadings)
+        for line in d.values():
+            writer.writerow(line)
