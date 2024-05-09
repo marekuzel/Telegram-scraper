@@ -1,6 +1,5 @@
 import re
 from datetime import datetime
-from fuzzywuzzy import fuzz
 import configparser
 import os
 import csv
@@ -20,6 +19,7 @@ def parseReactions(text: str) -> int:
     total_sum = sum(map(int, numbers))
     return total_sum
 
+
 def get_message_link(chat_id: int, message_id: int) -> str:
     """Returns the link to a message.
 
@@ -32,6 +32,7 @@ def get_message_link(chat_id: int, message_id: int) -> str:
     """
     base_url = "https://t.me/c/"
     return f"{base_url}{chat_id}/{message_id}"
+
 
 def formatMessage(message: str, names: bool, subjects:dict, client)->list:
     """Formats the messages into a list.
@@ -64,6 +65,7 @@ def formatMessage(message: str, names: bool, subjects:dict, client)->list:
             list.append(subjects[subject])
     return list
 
+
 def generateChannelsFile(result) -> None:
     """Generates a list of channels from the result of GetDialogsRequest.
 
@@ -79,6 +81,7 @@ def generateChannelsFile(result) -> None:
     print ("Channel list generated. Please edit channels.txt and run the script again.")
     exit()
 
+
 def createListOfChannels()->list:
     """Creates a list of channels from channels.txt.
 
@@ -89,6 +92,7 @@ def createListOfChannels()->list:
         listOfChannels = f.readlines()
     listOfChannels = [x.strip() for x in listOfChannels]
     return listOfChannels
+
 
 def checkChat(chat, listOfChannels:list) -> bool:
     """Checks if the chat is a channel and if it is in the channel list.
@@ -110,6 +114,8 @@ def checkChat(chat, listOfChannels:list) -> bool:
     except AttributeError:
         print ("AttributeError")
         return True
+    
+    
 def get_datetime_from_user(string: str) -> datetime:
     """Gets the date and time from the user.
 
@@ -130,6 +136,7 @@ def get_datetime_from_user(string: str) -> datetime:
         except ValueError:
             print("Invalid input. Please enter the date and time in the correct format.")
 
+
 def nOfDays(startDate: datetime, endDate: datetime) -> bool:
     """Checks if the number of days between the start and end date is less than or equal to 0.
 
@@ -144,6 +151,7 @@ def nOfDays(startDate: datetime, endDate: datetime) -> bool:
     if delta.days <= 0:
         return True
     
+    
 def checkToday(date: datetime) -> bool:
     """Checks if the date is in the future.
 
@@ -156,6 +164,7 @@ def checkToday(date: datetime) -> bool:
     dayDiff = date - datetime.today()
     if dayDiff.days > 0:
         return True
+    
     
 def getDates () -> tuple:
     """Gets the start and end date from the user.
@@ -181,51 +190,6 @@ def tryListOfChannels(listOfChannels:list) -> list:
         print(f"An error occurred: {str(e)}")
     return listOfChannels
 
-def getListOfSubjects(File:str) -> dict:
-    """creates list of names of the subjects to count from the text file
-
-    Args:
-        File (str): name of the text file
-
-    Returns:
-        list: list of subjects
-    """
-    subjects = []
-    try:
-        with open(File, "r") as f:
-            listOfSubjects = f.readlines()
-    except:
-        print(f"Error: No subjects.txt found in working directory. Create a text file with one name/subject on each line")
-        exit()
-    for line in listOfSubjects:
-        line = line.strip()
-        line = line.lower()
-        subjects.append(line)
-    return subjects
-
-def countSubjects(text:str) -> dict:
-    """counts number of subjects in the given text
-
-    Args:
-        text (str): text body of the message
-    Returns:
-        dict: dictionary of subjects and their count
-    """
-    subjects = getListOfSubjects("subjects.txt")
-    subjectsD = {}
-    for name in subjects:
-        subjectsD[name] = 0
-    SIMILARITY_THRESHOLD=70 #this seemed to work fine for me, however, this feature is very unreliable and should be used only for estimates
-    textList = text.lower().split()
-    for subject in subjects:
-        for word in textList:
-            similarity = fuzz.ratio(subject, word)
-            if similarity >= SIMILARITY_THRESHOLD:
-                subjectsD[subject] += 1
-                with open("spravy.txt", "a") as w:
-                    w.write(text)
-                    w.write("\n-----------------------\n")
-    return subjectsD
 
 def createConfig():
     """
@@ -240,6 +204,7 @@ def createConfig():
         f.write(f"api_id = {api}\n")
         f.write(f"api_hash = {hash}\n")
         f.write(f"username = {username}\n")
+        
         
 def getConfig()->tuple:
     """
@@ -261,18 +226,31 @@ def getConfig()->tuple:
     return api_id, api_hash, username
 
 
-def channelVerif (result, listOfChannels, d) -> bool:
+def channelVerif (result: object, listOfChannels: list) -> bool:
+    """
+    function to verify if the channels selected are correct
+    
+    Args:
+        result: the result of GetDialogsRequest
+        listOfChannels: list of channels
+    Returns:
+        bool: True if the user wants to exit
+    """
     for chat in result.chats:
         if str(chat.title) in listOfChannels:
             print (chat.title)
         else:
             print (f"{chat.title} not selected")
     print ("-------------------------------------------------------------------------------")
-    print ("These are the channels picked up by the script. Do you want to continue? (y/n)")
-    if input() == "n":
-        return False
+    if input("These are the channels picked up by the script. Do you want to continue? (y/n)") == "n":
+        return True
+    return False
+
 
 def csvWriter(names, subjects, d):
+    """
+    Writes the data to a csv file
+    """
     if names:
         print (subjects)
     with open("data.csv", "w", newline="") as f:
