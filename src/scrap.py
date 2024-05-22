@@ -3,9 +3,8 @@
 import os
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
-from hedon_lib import *
+from scraper_lib import *
 from datetime import datetime
-import sys
 import argparse
 
 def main():
