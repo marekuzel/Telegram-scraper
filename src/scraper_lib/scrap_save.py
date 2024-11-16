@@ -1,5 +1,6 @@
 import csv
 import re
+import pandas as pd
 
 
 
@@ -61,7 +62,62 @@ def formatMessage(message: str, client)->list:
         list.append("None")
     return list
 
+def collectData(chatId, client, startDate, endDate) -> pd.DataFrame:
+    # Initialize a dictionary with empty lists for each column
+    data = {
+        "Id": [],
+        "msg_title": [],
+        "reactions": [],
+        "views": [],
+        "date": [],
+        "messageBody": [],
+        "link": [],
+        "fwdFrom": [],
+        "replies": [],
+        "forwards": [],
+        "postAuthor": [],
+        "embededURL": []
+    }
+    for message in client.iter_messages(chatId):
+        try:
+            if message.date.replace(tzinfo=None) > endDate:
+                continue
+            elif message.date.replace(tzinfo=None) < startDate:
+                break
+            
+            # Populate each column list with data for this message
+            data["Id"].append(message.id)
+            data["msg_title"].append(" ".join(str(message.text).split(" ")[:4]) if message.text else "NULL")
+            data["reactions"].append(parseReactions(str(message.reactions)))
+            data["views"].append(message.views)
+            data["date"].append(str(message.date.replace(tzinfo=None)))
+            data["messageBody"].append(message.text if message.text else "NULL")
+            data["link"].append(getMessageLink(message.chat.id, message.id))
+            data["fwdFrom"].append(message.forwarded_from if message.forwarded_from else "NULL")
+            data["replies"].append(message.replies if message.replies else "NULL")
+            data["forwards"].append(message.forwards if message.forwards else "NULL")
+            data["postAuthor"].append(message.sender.username if message.sender else "NULL")
+            data["embededURL"].append(message.web_preview.url if message.web_preview else "NULL")
+        except:
+            pass
+    for i in data:
+        print (data[i])
+    # Convert the dictionary to a DataFrame
+    df = pd.DataFrame(data)
+    return df
 
+def extFormatMessage(dataList, message):
+    dataList[0].append(message.Id)
+    dataList[1].append (" ".join(str(message.text).split(" ")[:4]))
+    dataList[2] = message.sender.username
+    list.append(msg_title)
+    list.append(parseReactions(str(message.reactions)))
+    list.append(message.views)
+    list.append(str(message.date.replace(tzinfo=None)))
+    list.append(message.text)
+    list.append(getMessageLink(message.chat.id, message.id))
+    
+    
 def simpleCsvWriter(d:dict):
     """
     Writes the less extensive data to a csv file

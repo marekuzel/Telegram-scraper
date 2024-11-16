@@ -52,18 +52,9 @@ def main():
             if checkChat(chat, listOfChannels):
                 continue
             print (f"{chat.title} in progress...")
-            try:
-                for message in client.iter_messages(chat.id):
-                    """if message.date.replace(tzinfo=None) > end_date:
-                        continue
-                    elif message.date.replace(tzinfo=None) < start_date:
-                        break
-                    d["message{0}".format(message.id)] = formatMessage(message, client)"""
-                    print (message)
-            except:
-                pass
+            dt = collectData(chat.id, client, start_date, end_date)
     #writing to csv file
-    csvWriter(d)
-
+    #simpleCsvWriter(d)
+    pd.DataFrame.to_csv(dt)
 if __name__ == "__main__":
     main()
