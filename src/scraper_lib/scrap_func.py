@@ -1,69 +1,8 @@
-import re
+
 from datetime import datetime
 import configparser
 import os
-import csv
 
-
-def parseReactions(text: str) -> int:
-    """Parses the number of reactions from a string.
-
-    Args:
-        text (str): message.reactions
-
-    Returns:
-        int: total number of reactions
-    """
-    pattern = r'count=\D*(\d+)'  # Regular expression pattern to match numbers after "count=15"
-    numbers = re.findall(pattern, text)
-    total_sum = sum(map(int, numbers))
-    return total_sum
-
-
-def get_message_link(chat_id: int, message_id: int) -> str:
-    """Returns the link to a message.
-
-    Args:
-        chat_id (int): chat_id
-        message_id (int): message_id
-
-    Returns:
-        str: link to the message
-    """
-    base_url = "https://t.me/c/"
-    return f"{base_url}{chat_id}/{message_id}"
-
-
-def formatMessage(message: str, names: bool, subjects:dict, client)->list:
-    """Formats the messages into a list.
-
-    Args:
-        message (str): message.text
-        names (bool): True if names are to be counted
-        subjects (dict): Dictionary storing appearances of each subject
-
-    Returns:
-        list: list of message attributes
-    """
-    list = []
-    title = str(message.text).split(" ")
-    msg_title = " ".join(title[:4])
-    list.append(message.sender.username) 
-    list.append(msg_title)
-    list.append(parseReactions(str(message.reactions)))
-    list.append(message.views)
-    list.append(str(message.date.replace(tzinfo=None)))
-    list.append(message.text)
-    list.append(get_message_link(message.chat.id, message.id))
-    try:
-        list.append((client.get_entity(message.fwd_from.from_id)).username)
-    except:
-        list.append("None")
-    
-    if names:
-        for subject in subjects:
-            list.append(subjects[subject])
-    return list
 
 
 def generateChannelsFile(result) -> None:
@@ -75,9 +14,12 @@ def generateChannelsFile(result) -> None:
     print ("Do you want to generate channel.txt? (y/n)")
     if input() == "n":
         exit()
-    with open("channels.txt", "w") as f:
+    with open("channels.txt", "w", encoding="utf8") as f:
         for chat in result.chats:
-            f.write(chat.title + "\n")
+            try:
+                f.write(chat.title + "\n")
+            except:
+                continue
     print ("Channel list generated. Please edit channels.txt and run the script again.")
     exit()
 
@@ -88,7 +30,7 @@ def createListOfChannels()->list:
     Returns:
         list: list of channels
     """
-    with open ("channels.txt", "r") as f:
+    with open ("channels.txt", "r",encoding="utf8") as f:
         listOfChannels = f.readlines()
     listOfChannels = [x.strip() for x in listOfChannels]
     return listOfChannels
@@ -201,6 +143,7 @@ def createConfig():
     hash = input("Enter your api_hash: ")
     username = input("Enter your username: ")
     with open("config.ini", "w") as f:
+        f.write("[Telegram]\n")
         f.write(f"api_id = {api}\n")
         f.write(f"api_hash = {hash}\n")
         f.write(f"username = {username}\n")
@@ -245,19 +188,3 @@ def channelVerif (result: object, listOfChannels: list) -> bool:
     if input("These are the channels picked up by the script. Do you want to continue? (y/n)") == "n":
         return True
     return False
-
-
-def csvWriter(names, subjects, d):
-    """
-    Writes the data to a csv file
-    """
-    if names:
-        print (subjects)
-    with open("data.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        listOfHeadings = ["Author", "Title", "Interactions", "Views", "Date", "Message body", "Link", "Forward from"]
-        for subject in subjects:
-            listOfHeadings.append(subject)
-        writer.writerow(listOfHeadings)
-        for line in d.values():
-            writer.writerow(line)

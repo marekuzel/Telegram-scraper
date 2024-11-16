@@ -1,2 +1,2 @@
 from .scrap_func import *
-from .scrap_namefunc import *
+from .scraper_saveAs import save

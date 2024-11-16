@@ -3,16 +3,15 @@
 import os
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
-from scraper_lib import *
 from datetime import datetime
 import argparse
 
-def main():
-    names = False #flag for names
-    d = {} #dictionary to store messages
-    subjects = {} #dictionary to store subjects
+from scraper_lib import *
 
-    #checks for config file
+
+def main():
+    d = {} #dictionary to store messages
+
     api_id, api_hash, username = getConfig()
 
     #gets the api_id and api_hash
@@ -26,14 +25,10 @@ def main():
         ))
 
     parser = argparse.ArgumentParser(description="Downloads messages from telegram chats and saves them to a csv file")
-    parser.add_argument("-n", "--names", help="downloads messages with count of subject mentions. Subject file should contain each subject/name on a new line. Experimental feature", action="store_true")
     parser.add_argument("-c", "--channels", help="Creates a file with the list of channels", action="store_true")
-
-    #parse the arguments
+    parser.add_argument("-s", "--simpleData", help="Generates less extensive table. Contains only essential information.")
     args = parser.parse_args()
-    if args.names:
-        names = True
-    elif args.channels:
+    if args.channels:
         generateChannelsFile(result)
         exit()
 
@@ -57,18 +52,18 @@ def main():
             if checkChat(chat, listOfChannels):
                 continue
             print (f"{chat.title} in progress...")
-            for message in client.iter_messages(chat.id):
-                if message.date.replace(tzinfo=None) > end_date:
-                    continue
-                elif message.date.replace(tzinfo=None) < start_date:
-                    break
-                subjectsPerMessage ={}
-                if names:
-                    subjectsPerMessage = name_countMentions(message.text, subjects) 
-                d["message{0}".format(message.id)] = formatMessage(message, names, subjectsPerMessage, client)
-                subjectsPerMessage = {key: 0 for key in subjectsPerMessage}
+            try:
+                for message in client.iter_messages(chat.id):
+                    """if message.date.replace(tzinfo=None) > end_date:
+                        continue
+                    elif message.date.replace(tzinfo=None) < start_date:
+                        break
+                    d["message{0}".format(message.id)] = formatMessage(message, client)"""
+                    print (message)
+            except:
+                pass
     #writing to csv file
-    csvWriter(names,subjects,d)
+    csvWriter(d)
 
 if __name__ == "__main__":
     main()
