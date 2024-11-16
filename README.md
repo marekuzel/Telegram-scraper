@@ -25,10 +25,6 @@ After that you can run the script with the following commands:
 #shows help
 ./scrap.py -c
 #generates channel list
-./scrap.py -n
-#runs the script with number of mentions for subjects
-#this feature is just for estimating the number of mentions
-#and is not accurate
 
 ```
 ## License
