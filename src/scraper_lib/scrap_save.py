@@ -36,7 +36,7 @@ def getMessageLink(chat_id: int, message_id: int) -> str:
     return f"{base_url}{chat_id}/{message_id}"
             
 
-def formatMessage(message: str, client)->list:
+async def formatMessage(message: str, client)->list:
     """Formats the messages into a list.
 
     Args:
@@ -56,7 +56,8 @@ def formatMessage(message: str, client)->list:
     list.append(message.text)
     list.append(getMessageLink(message.chat.id, message.id))
     try:
-        list.append((client.get_entity(message.fwd_from.from_id)).username)
+        entity =  (await client.get_entity(message.fwd_from.from_id)).username
+        list.append(entity)
     except:
         list.append("None")
     return list
